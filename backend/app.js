@@ -41,6 +41,18 @@ app.get("/api/yt",(req,res) => {
 });
 
 function download(url, format, qualityLevel = 'high') {
+    // Clean the URL to prevent duplication issues
+    url = url.trim();
+    
+    // Remove any duplicated URLs (if URL contains the same URL twice)
+    const urlPattern = /https?:\/\/[^\s]+/g;
+    const matches = url.match(urlPattern);
+    if (matches && matches.length > 1) {
+        // Take the first valid URL
+        url = matches[0];
+        console.log('Cleaned duplicate URL:', url);
+    }
+    
     // Generate a unique filename with timestamp
     const timestamp = Date.now();
     const ext = format === 'mp3' ? 'mp3' : 'mp4';
@@ -52,7 +64,22 @@ function download(url, format, qualityLevel = 'high') {
     return new Promise((resolve, reject) => {
         try {
             let stream;
-            const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36';
+            const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+            
+            // Enhanced options for better YouTube compatibility
+            const options = {
+                requestOptions: {
+                    headers: {
+                        'User-Agent': userAgent,
+                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                        'Accept-Language': 'en-US,en;q=0.5',
+                        'Accept-Encoding': 'gzip, deflate',
+                        'DNT': '1',
+                        'Connection': 'keep-alive',
+                        'Upgrade-Insecure-Requests': '1'
+                    }
+                }
+            };
             
             if (format === 'mp3') {
                 // For MP3 format (audio only)
@@ -61,11 +88,7 @@ function download(url, format, qualityLevel = 'high') {
                 stream = ytdl(url, { 
                     filter: 'audioonly', 
                     quality: quality,
-                    requestOptions: {
-                        headers: {
-                            'User-Agent': userAgent
-                        }
-                    }
+                    ...options
                 });
             } else {
                 // For MP4 format (video)
@@ -83,15 +106,10 @@ function download(url, format, qualityLevel = 'high') {
                         quality = 'highest';
                         break;
                 }
-                
-                stream = ytdl(url, { 
+                  stream = ytdl(url, { 
                     quality: quality,
                     filter: format => format.container === 'mp4',
-                    requestOptions: {
-                        headers: {
-                            'User-Agent': userAgent
-                        }
-                    }
+                    ...options
                 });
             }
               // Handle stream errors before piping
@@ -158,12 +176,26 @@ function download(url, format, qualityLevel = 'high') {
 
 app.post("/api/yt", async (req, res) => {
     try {
-        const { url, format, qualityLevel } = req.body;
+        let { url, format, qualityLevel } = req.body;
         console.log("Received request:", { url, format, qualityLevel });
-          if (!url) {
+        
+        if (!url) {
             return res.status(400).json({ error: "URL is required" });
         }
-          // Check if it's a playlist URL (either with list parameter or direct playlist URL)
+        
+        // Clean the URL to prevent duplication issues
+        url = url.trim();
+        
+        // Remove any duplicated URLs (if URL contains the same URL twice)
+        const urlPattern = /https?:\/\/[^\s]+/g;
+        const matches = url.match(urlPattern);
+        if (matches && matches.length > 1) {
+            // Take the first valid URL
+            url = matches[0];
+            console.log('Cleaned duplicate URL, using:', url);
+        }
+        
+        // Check if it's a playlist URL (either with list parameter or direct playlist URL)
         if (url.includes('list=') || url.includes('youtube.com/playlist')) {
             return res.status(200).json({
                 success: true,
@@ -396,10 +428,22 @@ app.get("/api/playlist", async (req, res) => {
 // API endpoint to download a specific video from a playlist
 app.post("/api/playlist/download", async (req, res) => {
     try {
-        const { videoUrl, format, qualityLevel } = req.body;
+        let { videoUrl, format, qualityLevel } = req.body;
         
         if (!videoUrl) {
             return res.status(400).json({ error: "Video URL is required" });
+        }
+        
+        // Clean the URL to prevent duplication issues
+        videoUrl = videoUrl.trim();
+        
+        // Remove any duplicated URLs (if URL contains the same URL twice)
+        const urlPattern = /https?:\/\/[^\s]+/g;
+        const matches = videoUrl.match(urlPattern);
+        if (matches && matches.length > 1) {
+            // Take the first valid URL
+            videoUrl = matches[0];
+            console.log('Cleaned duplicate video URL, using:', videoUrl);
         }
         
         // Clean up files to ensure we don't exceed the storage limit
