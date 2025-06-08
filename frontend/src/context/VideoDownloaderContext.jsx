@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { API_BASE_URL } from '../utils/apiConfig';
 
 // Create context
 const VideoDownloaderContext = createContext();
@@ -117,7 +118,7 @@ export const VideoDownloaderProvider = ({ children }) => {
         });
       }, 500);
       
-      const response = await fetch('http://localhost:3000/api/yt', {
+      const response = await fetch(`${API_BASE_URL}/api/yt`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -163,7 +164,7 @@ export const VideoDownloaderProvider = ({ children }) => {
     
     try {
       // Fetch playlist info
-      const response = await fetch(`http://localhost:3000/api/playlist?url=${encodeURIComponent(url)}`);
+      const response = await fetch(`${API_BASE_URL}/api/playlist?url=${encodeURIComponent(url)}`);
       const data = await response.json();
       
       if (!response.ok) {
@@ -198,10 +199,9 @@ export const VideoDownloaderProvider = ({ children }) => {
         setProgress(prev => {
           const newValue = prev + Math.random() * 10;
           return newValue > 95 ? 95 : newValue;
-        });
-      }, 500);
+        });      }, 500);
       
-      const response = await fetch('http://localhost:3000/api/playlist/download', {
+      const response = await fetch(`${API_BASE_URL}/api/playlist/download`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -259,10 +259,9 @@ export const VideoDownloaderProvider = ({ children }) => {
         const videoUrl = selectedVideoData[i].url;
         const videoTitle = selectedVideoData[i].title;
         
-        // Update progress based on completed videos
-        setProgress((i / selectedVideoData.length) * 100);
+        // Update progress based on completed videos        setProgress((i / selectedVideoData.length) * 100);
         
-        const response = await fetch('http://localhost:3000/api/playlist/download', {
+        const response = await fetch(`${API_BASE_URL}/api/playlist/download`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -392,7 +391,7 @@ export const VideoDownloaderProvider = ({ children }) => {
   const fetchStorageInfo = async () => {
     setLoadingStorage(true);
     try {
-      const response = await fetch('http://localhost:3000/api/storage');
+      const response = await fetch(`${API_BASE_URL}/api/storage`);
       const data = await response.json();
       
       if (response.ok) {

@@ -1,6 +1,7 @@
 import React from 'react';
 import { FiRefreshCw, FiCheckSquare, FiSquare, FiDownload } from 'react-icons/fi';
 import PlaylistItem from './PlaylistItem';
+import { API_BASE_URL } from '../../utils/apiConfig';
 
 const PlaylistView = ({ 
   playlistInfo, 
@@ -85,11 +86,10 @@ const PlaylistView = ({
                     className="btn btn-sm btn-success"
                     onClick={() => {
                       // Save all files at once
-                      if (downloadInfo.multipleFiles && downloadInfo.downloadedFiles) {
-                        downloadInfo.downloadedFiles.forEach((file, index) => {
+                      if (downloadInfo.multipleFiles && downloadInfo.downloadedFiles) {                        downloadInfo.downloadedFiles.forEach((file, index) => {
                           setTimeout(() => {
                             const link = document.createElement('a');
-                            link.href = `http://localhost:3000${file.downloadUrl}`;
+                            link.href = `${API_BASE_URL}${file.downloadUrl}`;
                             link.download = file.filename;
                             document.body.appendChild(link);
                             link.click();
@@ -98,7 +98,7 @@ const PlaylistView = ({
                         });
                       } else {
                         const link = document.createElement('a');
-                        link.href = `http://localhost:3000${downloadInfo.downloadUrl}`;
+                        link.href = `${API_BASE_URL}${downloadInfo.downloadUrl}`;
                         link.download = downloadInfo.filename;
                         document.body.appendChild(link);
                         link.click();
@@ -112,8 +112,7 @@ const PlaylistView = ({
                 )}
               </div>
             )}
-          </div>
-            <div className="flex flex-col w-full gap-3 max-h-[400px] overflow-y-auto">            {playlistInfo.videos.map(video => (
+          </div>            <div className="flex flex-col w-full gap-3 max-h-[400px] overflow-y-auto">            {playlistInfo.videos.map(video => (
               <PlaylistItem
                 key={video.id}
                 video={video}
@@ -121,6 +120,7 @@ const PlaylistView = ({
                 toggleVideoSelection={toggleVideoSelection}
                 loading={loading}
                 handleDownloadVideo={handleDownloadVideo}
+                downloadInfo={downloadInfo}
               />            ))}
           </div>
             {/* Progress Bar at bottom if loading */}
@@ -157,14 +157,13 @@ const PlaylistView = ({
                   </div>
                   
                   <button 
-                    className="btn btn-success w-full"
-                    onClick={() => {
+                    className="btn btn-success w-full"                    onClick={() => {
                       // Save all files at once by triggering downloads
                       if (downloadInfo.multipleFiles && downloadInfo.downloadedFiles) {
                         downloadInfo.downloadedFiles.forEach((file, index) => {
                           setTimeout(() => {
                             const link = document.createElement('a');
-                            link.href = `http://localhost:3000${file.downloadUrl}`;
+                            link.href = `${API_BASE_URL}${file.downloadUrl}`;
                             link.download = file.filename;
                             document.body.appendChild(link);
                             link.click();
@@ -174,7 +173,7 @@ const PlaylistView = ({
                       } else {
                         // Single file download
                         const link = document.createElement('a');
-                        link.href = `http://localhost:3000${downloadInfo.downloadUrl}`;
+                        link.href = `${API_BASE_URL}${downloadInfo.downloadUrl}`;
                         link.download = downloadInfo.filename;
                         document.body.appendChild(link);
                         link.click();
