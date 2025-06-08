@@ -230,7 +230,19 @@ app.get('/downloads/:filename', (req, res) => {
   const filePath = path.join(__dirname, 'public', filename);
   
   if (fs.existsSync(filePath)) {
-    res.download(filePath);
+    // Set headers to force download
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Type', 'application/octet-stream');
+    
+    // Use res.download to force download behavior
+    res.download(filePath, filename, (err) => {
+      if (err) {
+        console.error('Download error:', err);
+        if (!res.headersSent) {
+          res.status(500).json({ error: "Download failed" });
+        }
+      }
+    });
   } else {
     res.status(404).json({ error: "File not found" });
   }
