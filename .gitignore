@@ -37,7 +37,8 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw?
-
+/frontend
+frontend
 # Backend downloads
 /backend/public/*.mp4
 /backend/public/*.mp3

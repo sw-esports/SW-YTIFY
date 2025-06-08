@@ -13,25 +13,32 @@ const cors = require('cors');
 // Configuration
 const MAX_FOLDER_SIZE = 1024 * 1024 * 1024; // 1GB in bytes
 const MAX_FILES_TO_KEEP = 10; // Fallback limit if needed
+
+// Middleware setup
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
-app.use(express.static(path.join(__dirname, 'public')));
-app.set('view-engine', 'ejs');
+
+// CORS configuration - simplified
 app.use(cors({
-    origin: process.env.NODE_ENV === 'production' 
-        ? process.env.FRONTEND_URL || 'https://your-netlify-site.netlify.app'
-        : 'http://localhost:5173'
+    origin: '*',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
-app.get('/', (req, res) => {
-  res.status(200);
-  res.send('Hi');
-});
+// Serve static files for downloads
+app.use('/downloads', express.static(path.join(__dirname, 'public')));
 
+// Serve React app build files from backend/public/dist at root route
+app.use(express.static(path.join(__dirname, 'public/dist')));
+
+app.set('view-engine', 'ejs');
+
+// API Routes
 app.get("/api/yt",(req,res) => { 
-    res.status(200),
-    res.send("api yt")
- })
+    res.status(200);
+    res.send("api yt");
+});
 
 function download(url, format, qualityLevel = 'high') {
     // Generate a unique filename with timestamp
@@ -191,13 +198,12 @@ app.post("/api/yt", async (req, res) => {
         } catch (err) {
             console.error("Error getting file size:", err);
         }
-        
-        res.status(200).json({
+          res.status(200).json({
             success: true,
             message: "Download successful",
             data: {
                 filename: downloadResult.filename,
-                downloadUrl: `/download/${downloadResult.filename}`,
+                downloadUrl: `/downloads/${downloadResult.filename}`,
                 fileSize: fileSize
             }
         });
@@ -219,7 +225,7 @@ if (!fs.existsSync(publicDir)) {
 }
 
 // Serve downloaded files
-app.get('/download/:filename', (req, res) => {
+app.get('/downloads/:filename', (req, res) => {
   const filename = req.params.filename;
   const filePath = path.join(__dirname, 'public', filename);
   
@@ -406,13 +412,12 @@ app.post("/api/playlist/download", async (req, res) => {
         } catch (err) {
             console.error("Error getting file size:", err);
         }
-        
-        res.status(200).json({
+          res.status(200).json({
             success: true,
             message: "Download successful",
             data: {
                 filename: downloadResult.filename,
-                downloadUrl: `/download/${downloadResult.filename}`,
+                downloadUrl: `/downloads/${downloadResult.filename}`,
                 fileSize: fileSize
             }
         });
@@ -447,8 +452,22 @@ app.get("/api/storage", (req, res) => {
         console.error("Storage info error:", error);
         res.status(500).json({
             success: false,
-            error: error.message
-        });
+            error: error.message        });
+    }
+});
+
+// Serve React App - This should be AFTER all API routes
+app.get('*', (req, res) => {
+    // Don't serve React app for API routes
+    if (req.path.startsWith('/api/') || req.path.startsWith('/downloads/')) {
+        return res.status(404).json({ error: 'API endpoint not found' });
+    }
+    
+    const indexPath = path.join(__dirname, 'public/dist/index.html');
+    if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+    } else {
+        res.status(404).send('React app not built. Please place your built React app in backend/public/dist folder.');
     }
 });
 
