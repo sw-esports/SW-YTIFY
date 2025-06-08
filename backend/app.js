@@ -424,7 +424,8 @@ app.post("/api/playlist/download", async (req, res) => {
         } catch (err) {
             console.error("Error getting file size:", err);
         }
-          res.status(200).json({
+        
+        res.status(200).json({
             success: true,
             message: "Download successful",
             data: {
@@ -435,10 +436,27 @@ app.post("/api/playlist/download", async (req, res) => {
         });
     } catch (error) {
         console.error("Download error:", error);
+        
+        // Provide more user-friendly error messages
+        let errorMessage = "Download failed";
+        if (error.message.includes("Video unavailable")) {
+            errorMessage = "Video unavailable. This video may be private, deleted, or geo-restricted.";
+        } else if (error.message.includes("UnrecoverableError")) {
+            errorMessage = "Unable to access this video. It may be restricted or removed.";
+        } else if (error.message.includes("403")) {
+            errorMessage = "Access denied. The video may be age-restricted or private.";
+        } else if (error.message.includes("404")) {
+            errorMessage = "Video not found. The video may have been deleted.";
+        } else if (error.message.includes("ENOTFOUND")) {
+            errorMessage = "Network error. Please check your internet connection.";
+        } else {
+            errorMessage = error.message || "Download failed";
+        }
+        
         res.status(500).json({
             success: false,
-            message: "Download failed",
-            error: error.message
+            message: errorMessage,
+            error: errorMessage
         });
     }
 });
